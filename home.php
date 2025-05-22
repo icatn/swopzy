@@ -18,10 +18,10 @@
             <ul>
                 <li><a href="logout.php" class="link">Logout</a></li>
                 <li><a href="home.php" class="link active">Home</a></li>
+                <li><a href="favorite.php" class="link">Favorite</a></li>
                 <li><a href="profile.php" class="link">Profile</a></li>  
                 <li><a href="sell.php" class="link">Add_Product</a></li>
-                <li><a href="#" class="link" onclick="scrollToSection('contact')">Contact</a></li>
-                <li><a href="#" class="link" onclick="scrollToSection('about')">About Us</a></li>
+                <li><a href="#footer" class="link" onclick="scrollToFooter(event)">Contact Us</a></li>
             </ul>
         </div>
         <div class="nav-menu-btn">
@@ -36,6 +36,11 @@
             <button onclick="scrollToSection('categories')" class="btn">explore more</button>
         </div>
     </section>
+
+    <form action="result.php" method="get" class="search-bar" style="display:flex;justify-content:center;margin:130px 0 30px 0;">
+        <input type="text" name="q" placeholder="Search for products..." class="input-field" style="width:300px;padding:10px;border-radius:20px;border:1px solid #ccc;">
+        <button type="submit" class="btn" style="margin-left:10px;padding:10px 20px;border-radius:20px;background:#007bff;color:#fff;border:none;">Search</button>
+    </form>
 
     <section id="categories" class="categories-section">
         <h2>Categories</h2>
@@ -127,16 +132,25 @@
         </div>
     </section>
     
-    <section id="about" class="info-section">
-        <h2>About Us</h2>
-        <p>PFC INFO</p>
-    </section>
-
-    <section id="contact" class="info-section">
-        <h2>Contact Us</h2>
-        <p>EMAIL , PHONE ,...</p>
-    </section>
 </div>
+
+<footer id="footer" style="background:rgba(39,39,39,0.92); color:#fff; padding:0 0 20px 0; text-align:center; font-size:17px; margin-top:0; box-shadow:0 -2px 18px rgba(0,0,0,0.10);">
+    <div style="max-width:1200px; margin:auto; display:flex; flex-direction:column; align-items:center; gap:18px;">
+        <div style="margin-bottom:10px;">
+            <img src="logo-swopzy.png" alt="Swopzy Logo" style="height:45px; vertical-align:middle; filter:drop-shadow(0 2px 6px rgba(0,0,0,0.10));">
+        </div>
+        <div style="font-size:22px; font-weight:bold; letter-spacing:1px;">Swopzy</div>
+        <div style="display:flex; gap:18px; font-size:18px; margin-bottom:8px;">
+            <a href="contact.php" style="color:#50bfff; text-decoration:underline;">Contact Us</a>
+            <span style="color:#fff;">|</span>
+            <a href="about.php" style="color:#50bfff; text-decoration:underline;">About</a>
+            <span style="color:#fff;">|</span>
+            <a href="favorite.php" style="color:#50bfff; text-decoration:underline;">Favorites</a>
+        </div>
+        <div style="font-size:15px; color:#e0e0e0;">&copy; 2025 Swopzy. All rights reserved.</div>
+        <div style="font-size:13px; color:#b0e0ff;">Designed by Swopzy Team</div>
+    </div>
+</footer>
 
 <script>
 function toggleMenu() {
@@ -149,6 +163,11 @@ function scrollToSection(sectionId) {
     if (element) {
         element.scrollIntoView({ behavior: 'smooth' });
     }
+}
+
+function scrollToFooter(event) {
+    event.preventDefault();
+    document.getElementById('footer').scrollIntoView({ behavior: 'smooth' });
 }
 </script>
 

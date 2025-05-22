@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="style.css">
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
-    <title>Electronics</title>
+    <title>Men clothes</title>
     <style>
         /* Modal Styles */
         .modal {
@@ -50,7 +50,7 @@
             <ul>
                 <li><a href="home.php" class="link">Home</a></li>
                 <li><a href="sell.php" class="link">Sell Products</a></li>
-                <li><a href="#" class="link active">Electronics</a></li>
+                <li><a href="#" class="link active">Men clothes</a></li>
                 <li><a href="#footer" class="link" onclick="scrollToFooter(event)">Contact Us</a></li>
             </ul>
         </div>
@@ -62,17 +62,21 @@
         </div>
     </nav>
     <section class="user-products">
-        <h2>Electronics</h2>
+        <h2>Men clothes</h2>
         <div class="products-list">
             <?php 
             session_start();
+            // Enable error reporting for debugging
+            ini_set('display_errors', 1);
+            ini_set('display_startup_errors', 1);
+            error_reporting(E_ALL);
             $conn = new mysqli("localhost", "root", "", "swopzy", 3306);
             if ($conn->connect_error) {
                 die("Connection failed (main): " . $conn->connect_error);
             }
 
             if (!isset($_SESSION['user'])) {
-                header("Location: page1.php"); // Redirect to login page if not logged in
+                header("Location: login.php"); // Redirect to login page if not logged in
                 exit();
             }
 
@@ -85,10 +89,11 @@
             $stmt->fetch();
             $stmt->close();
 
+            // Fetch products with the phone number from the products table
             $product_query = "
                 SELECT * 
                 FROM products 
-                WHERE category = 'Electronics'
+                WHERE category = 'Men'
             ";
             $stmt = $conn->prepare($product_query);
             $stmt->execute();
@@ -101,62 +106,54 @@
             $stmt->close();
             $conn->close();
 
-            // Fetch user's favorite product IDs
             $fav_conn = new mysqli("localhost", "root", "", "swopzy", 3306);
             if ($fav_conn->connect_error) {
                 die("Connection failed (fav): " . $fav_conn->connect_error);
             }
+            $fav_query = "SELECT product_id FROM favorites WHERE user_id = '$user_id'";
+            $fav_result = $fav_conn->query($fav_query);
             $fav_ids = [];
-            $fav_stmt = $fav_conn->prepare("SELECT product_id FROM favorites WHERE user_id = ?");
-            $fav_stmt->bind_param("i", $user_id);
-            $fav_stmt->execute();
-            $fav_result = $fav_stmt->get_result();
-            while ($fav_row = $fav_result->fetch_assoc()) {
-                $fav_ids[] = $fav_row['product_id'];
+            while ($row = $fav_result->fetch_assoc()) {
+                $fav_ids[] = $row['product_id'];
             }
-            $fav_stmt->close();
             $fav_conn->close();
             ?>
-            <?php 
-            // Enable error reporting for debugging
-            ini_set('display_errors', 1);
-            ini_set('display_startup_errors', 1);
-            error_reporting(E_ALL);
-            ?>
-            <?php foreach (
-                isset($products) ? $products : [] as $product): ?>
+            <?php foreach ($products as $product): ?>
                 <div class="product-card">
                     <a href="product.php?id=<?php echo $product['id']; ?>" style="text-decoration:none;color:inherit;">
                         <div class="product-content">
                             <div class="product-media">
-                                <?php if (isset($product['picture']) && (strpos($product['picture'], '.jpg') !== false || strpos($product['picture'], '.png') !== false || strpos($product['picture'], '.jpeg') !== false)): ?>
-                                    <img src="uploads/<?php echo htmlspecialchars($product["picture"]); ?>" alt="<?php echo htmlspecialchars($product['name'] ?? ''); ?>" class="product-image">
-                                <?php elseif (isset($product['picture']) && (strpos($product['picture'], '.mp4') !== false || strpos($product['picture'], '.webm') !== false)): ?>
-                                    <video src="uploads/<?php echo htmlspecialchars($product["picture"]); ?>" controls class="product-video"></video>
+                                <?php
+                                $conn = new mysqli("localhost", "root", "", "swopzy");
+                                $img_q = $conn->prepare("SELECT image FROM product_images WHERE product_id = ? ORDER BY id ASC LIMIT 1");
+                                $img_q->bind_param("i", $product['id']);
+                                $img_q->execute();
+                                $img_res = $img_q->get_result();
+                                $main_img = $img_res->fetch_assoc();
+                                $img_q->close();
+                                $conn->close();
+                                ?>
+                                <?php if ($main_img && !empty($main_img['image'])): ?>
+                                    <img src="uploads/<?php echo htmlspecialchars($main_img['image']); ?>" alt="<?php echo htmlspecialchars($product['name']); ?>" class="product-image">
+                                <?php elseif (isset($product['picture']) && (strpos($product['picture'], '.jpg') !== false || strpos($product['picture'], '.png') !== false || strpos($product['picture'], '.jpeg') !== false)): ?>
+                                    <img src="uploads/<?php echo htmlspecialchars($product['picture']); ?>" alt="<?php echo htmlspecialchars($product['name']); ?>" class="product-image">
                                 <?php endif; ?>
                             </div>
                             <div class="product-info">
                                 <span class="favorite-star" data-product-id="<?php echo $product['id']; ?>">
                                     <i class='bx <?php echo in_array($product['id'], $fav_ids) ? "bxs-star" : "bx-star"; ?>'></i>
                                 </span>
-                                <h3><?php echo htmlspecialchars($product['name'] ?? ''); ?></h3>
-                                <!-- Display the phone number -->
-                                <p><strong>Contact:</strong> 
-                                    <?php echo !empty($product['number']) ? htmlspecialchars($product['number']) : 'Not provided'; ?>
-                                </p>
-                                <p><strong>Category:</strong> <?php echo htmlspecialchars($product['category'] ?? ''); ?></p>
-                                <p><strong>Price:</strong> da<?php echo htmlspecialchars($product['price'] ?? ''); ?></p>
-                                <p><strong>Condition:</strong> <?php echo htmlspecialchars($product['product_condition'] ?? ''); ?></p>
-                                <p><strong>Description:</strong> <?php echo htmlspecialchars($product['description'] ?? ''); ?></p>
+                                <h3><?php echo htmlspecialchars($product['name']); ?></h3>
+                                <p><strong>Contact:</strong> <?php echo !empty($product['number']) ? htmlspecialchars($product['number']) : 'Not provided'; ?></p>
+                                <p><strong>Category:</strong> <?php echo htmlspecialchars($product['category']); ?></p>
+                                <p><strong>Price:</strong> da<?php echo htmlspecialchars($product['price']); ?></p>
+                                <p><strong>Condition:</strong> <?php echo htmlspecialchars($product['product_condition']); ?></p>
+                                <p><strong>Description:</strong> <?php echo htmlspecialchars($product['description']); ?></p>
                             </div>
                         </div>
                     </a>
                 </div>
             <?php endforeach; ?>
-            <?php if (empty($products)) {
-                echo '<p style="color:red;">No products found in this category.</p>';
-            }
-            ?>
         </div>
     </section>
 </div>
@@ -181,6 +178,24 @@
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
+$(document).ready(function() {
+    $('.favorite-star').off('click').on('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var star = $(this).find('i');
+        var productId = $(this).data('product-id');
+        $.post('favorite.php', { product_id: productId }, function(data) {
+            if(data === 'added') {
+                star.removeClass('bx-star').addClass('bxs-star');
+            } else if(data === 'removed') {
+                star.removeClass('bxs-star').addClass('bx-star');
+            }
+        });
+    });
+});
+</script>
+
+<script>
 function myMenuFunction() {
     var i = document.getElementById("navMenu");
     if (i.className === "nav-menu") {
@@ -198,21 +213,6 @@ function scrollToFooter(event) {
     event.preventDefault();
     document.getElementById('footer').scrollIntoView({ behavior: 'smooth' });
 }
-
-$(document).ready(function() {
-    $('.favorite-star').click(function(e) {
-        e.stopPropagation();
-        var star = $(this).find('i');
-        var productId = $(this).data('product-id');
-        $.post('favorite_toggle.php', { product_id: productId }, function(data) {
-            if(data === 'added') {
-                star.removeClass('bx-star').addClass('bxs-star');
-            } else if(data === 'removed') {
-                star.removeClass('bxs-star').addClass('bx-star');
-            }
-        });
-    });
-});
 </script>
 </body>
 </html>
