@@ -10,7 +10,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $email = $_POST['email'];
         $password = md5($_POST['password']);
 
-        // Use prepared statement to prevent SQL injection
         $query = "SELECT * FROM users WHERE email=? AND password=?";
         $stmt = $conn->prepare($query);
         $stmt->bind_param("ss", $email, $password);
@@ -39,7 +38,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $email = $_POST['email'];
         $password = md5($_POST['password']);
 
-        // Use prepared statement to prevent SQL injection
         $query = "INSERT INTO users (username, email, password, role) VALUES (?, ?, ?, '')";
         $stmt = $conn->prepare($query);
         $stmt->bind_param("sss", $username, $email, $password);
@@ -72,8 +70,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <div class="nav-menu" id="navMenu">
             <ul>
                 <li><a href="#" class="link active">log_in</a></li>
-                <li><a href="#" class="link">Services</a></li>
-                <li><a href="#" class="link">About</a></li>
+                <li><a href="#" class="link" onclick="scrollToFooter(event)">Services</a></li>
+                
             </ul>
         </div>
         <div class="nav-button">
@@ -156,5 +154,32 @@ function register() {
     y.style.opacity = 1;
 }
 </script>
+<script>
+function scrollToFooter(event) {
+    event.preventDefault();
+    var footer = document.getElementById('footer');
+    if (footer) {
+        footer.scrollIntoView({ behavior: 'smooth' });
+    }
+}
+</script>
+
+<footer id="footer" style="background:rgba(39,39,39,0.92); color:#fff; padding:0 0 20px 0; text-align:center; font-size:17px; margin-top:0; box-shadow:0 -2px 18px rgba(0,0,0,0.10);">
+    <div style="max-width:1200px; margin:auto; display:flex; flex-direction:column; align-items:center; gap:18px;">
+        <div style="margin-bottom:10px;">
+            <img src="logo-swopzy.png" alt="Swopzy Logo" style="height:45px; vertical-align:middle; filter:drop-shadow(0 2px 6px rgba(0,0,0,0.10));">
+        </div>
+        <div style="font-size:22px; font-weight:bold; letter-spacing:1px;">Swopzy</div>
+        <div style="display:flex; gap:18px; font-size:18px; margin-bottom:8px;">
+            <a href="contact.php" style="color:#50bfff; text-decoration:underline;">Contact Us</a>
+            <span style="color:#fff;">|</span>
+            <a href="about.php" style="color:#50bfff; text-decoration:underline;">About</a>
+            <span style="color:#fff;">|</span>
+            <a href="favorite.php" style="color:#50bfff; text-decoration:underline;">Favorites</a>
+        </div>
+        <div style="font-size:15px; color:#e0e0e0;">&copy; 2025 Swopzy. All rights reserved.</div>
+        <div style="font-size:13px; color:#b0e0ff;">Designed by Swopzy Team</div>
+    </div>
+</footer>
 </body>
 </html>

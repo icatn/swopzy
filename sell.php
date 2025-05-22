@@ -6,7 +6,7 @@ if ($conn->connect_error) {
 }
 
 if (!isset($_SESSION['user'])) {
-    header("Location: login.php"); // Redirect to login page if not logged in
+    header("Location: page1.php"); // Redirect to login page if not logged in
     exit();
 }
 
@@ -14,34 +14,47 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['sell'])) {
     $user_email = $_SESSION['user'];
     $user_query = "SELECT id FROM users WHERE email=?";
     $stmt = $conn->prepare($user_query);
-    $stmt->bind_param("s", $user_email);//ربط القيمة المدخلة بالاستعلام
+    $stmt->bind_param("s", $user_email); // Link the input value to the query
     $stmt->execute();
     $stmt->bind_result($user_id);
-    $stmt->fetch(); //جلب البيانات
+    $stmt->fetch(); // Fetch the data
     $stmt->close();
 
     $name = $_POST['productName'];
     $category = $_POST['productCategory'];
     $price = $_POST['productPrice'];
+    $condition = $_POST['productCondition'];
+    $phone_number = $_POST['phoneNumber']; 
     $description = $_POST['productDescription'];
-    $picture = $_FILES['productMedia']['name'];
 
     // Handle file upload
     $target_dir = "uploads/";
-    $target_file = $target_dir . basename($_FILES["productMedia"]["name"]);
-
-    // Check if uploads directory exists, if not create it
-    if (!file_exists($target_dir)) {
-        mkdir($target_dir, 0777, true);
-    }
-
-    if (move_uploaded_file($_FILES["productMedia"]["tmp_name"], $target_file)) {
-        $sql = "INSERT INTO products (user_id, name, category, price, description, picture)
-                VALUES (?, ?, ?, ?, ?, ?)";
+    if (!empty($_FILES['productMedia']['name'][0])) {
+        $picture_names = [];
+        foreach ($_FILES['productMedia']['name'] as $idx => $filename) {
+            $target_file = $target_dir . basename($filename);
+            if (move_uploaded_file($_FILES["productMedia"]["tmp_name"][$idx], $target_file)) {
+                $picture_names[] = $filename;
+            }
+        }
+        // Insert product first
+        $sql = "INSERT INTO products (user_id, name, category, price, product_condition, picture, number, description) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param("isssds", $user_id, $name, $category, $price, $description, $picture);
-
+        $main_picture = $picture_names[0];
+        $stmt->bind_param("isssssss", $user_id, $name, $category, $price, $condition, $main_picture, $phone_number, $description);
         if ($stmt->execute()) {
+            $product_id = $stmt->insert_id;
+            // Insert all images into product_images table
+            $img_stmt = $conn->prepare("INSERT INTO product_images (product_id, image) VALUES (?, ?)");
+            if ($img_stmt) {
+                foreach ($picture_names as $img) {
+                    $img_stmt->bind_param("is", $product_id, $img);
+                    $img_stmt->execute();
+                }
+                $img_stmt->close();
+            } else {
+                echo "Error preparing image insert statement: " . $conn->error;
+            }
             echo "<script>alert('New product added successfully');</script>";
             header("Location: profile.php");
         } else {
@@ -49,7 +62,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['sell'])) {
         }
         $stmt->close();
     } else {
-        echo "Error uploading file.";
+        echo "Error uploading files.";
     }
 }
 ?>
@@ -68,7 +81,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['sell'])) {
 <div class="wrapper">
     <nav class="nav">
         <div class="nav-logo">
-        <img src="logo-swopzy.png" alt="Swopzy Logo">
+            <img src="logo-swopzy.png" alt="Swopzy Logo">
         </div>
         <div class="nav-menu" id="navMenu">
             <ul>
@@ -116,12 +129,25 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['sell'])) {
                 <i class="bx bx-dollar"></i>
             </div>
             <div class="input-box">
-                <textarea name="productDescription" id="productDescription" class="input-field" placeholder="Description" rows="4" required></textarea>
-                <i class="bx bx-edit-alt"></i>
+                <select name="productCondition" id="productCondition" class="input-field" required>
+                    <option value=""  disabled selected>Select Condition</option>
+                    <option value="new" style="color: black;">New</option>
+                    <option value="used like new" style="color: black;">Used Like New</option>
+                    <option value="bad" style="color: black;">Bad</option>
+                </select>
+                <i class="bx bx-info-circle"></i>
             </div>
             <div class="input-box">
-                <input type="file" name="productMedia" id="productMedia" class="input-field" accept="image/*,video/*" required>
+                <input type="file" name="productMedia[]" id="productMedia" class="input-field" accept="image/*,video/*" multiple required>
                 <i class="bx bx-image-add"></i>
+            </div>
+            <div class="input-box">
+                <textarea name="productDescription" id="productDescription" class="input-field" placeholder="Product Description" rows="3" required></textarea>
+                <i class="bx bx-message-alt-detail"></i>
+            </div>
+            <div class="input-box">
+                <input type="number" name="phoneNumber" id="phoneNumber" class="input-field" placeholder="Phone Number" required>
+                <i class="bx bx-phone"></i>
             </div>
             <div class="input-box">
                 <button type="submit" name="sell" class="submit">Submit Product</button>
@@ -129,6 +155,24 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['sell'])) {
         </form>
     </section>
 </div>
+
+<footer id="footer" style="background:rgba(39,39,39,0.92); color:#fff; padding:0 0 20px 0; text-align:center; font-size:17px; margin-top:0; box-shadow:0 -2px 18px rgba(0,0,0,0.10);">
+    <div style="max-width:1200px; margin:auto; display:flex; flex-direction:column; align-items:center; gap:18px;">
+        <div style="margin-bottom:10px;">
+            <img src="logo-swopzy.png" alt="Swopzy Logo" style="height:45px; vertical-align:middle; filter:drop-shadow(0 2px 6px rgba(0,0,0,0.10));">
+        </div>
+        <div style="font-size:22px; font-weight:bold; letter-spacing:1px;">Swopzy</div>
+        <div style="display:flex; gap:18px; font-size:18px; margin-bottom:8px;">
+            <a href="contact.php" style="color:#50bfff; text-decoration:underline;">Contact Us</a>
+            <span style="color:#fff;">|</span>
+            <a href="about.php" style="color:#50bfff; text-decoration:underline;">About</a>
+            <span style="color:#fff;">|</span>
+            <a href="favorite.php" style="color:#50bfff; text-decoration:underline;">Favorites</a>
+        </div>
+        <div style="font-size:15px; color:#e0e0e0;">&copy; 2025 Swopzy. All rights reserved.</div>
+        <div style="font-size:13px; color:#b0e0ff;">Designed by Swopzy Team</div>
+    </div>
+</footer>
 
 <script>
 function myMenuFunction() {
